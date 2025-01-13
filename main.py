@@ -3,16 +3,19 @@ from threading import Thread
 import time , random
 from win32api import GetAsyncKeyState
 from ctypes import windll
+import perlin_noise
 
 class Screen:
     def __init__(self) -> None:
         self.size = (200 , 400)
-        self.map = []
-        for i in range(self.size[0]):
-            self.map.append([])
-            for j in range(self.size[1]):
-                # self.map[i].append(Point((i , j) , (random.randint(0 , 255) , random.randint(0 , 255) , 0)))
-                self.map[i].append((0 , random.randint(150 , 235) , 0))
+        print("正在生成地图")
+        self.map = perlin_noise.get_map(self.size)
+        # exit(0)
+        # for i in range(self.size[0]):
+        #     self.map.append([])
+        #     for j in range(self.size[1]):
+        #         # self.map[i].append(Point((i , j) , (random.randint(0 , 255) , random.randint(0 , 255) , 0)))
+        #         self.map[i].append((0 , random.randint(150 , 235) , 0))
 
     def show(self):
         for i in range(camera.pos[0] , camera.pos[0] + camera.size[0]):
@@ -165,13 +168,13 @@ class Main:
 
     def input(self):
         if GetAsyncKeyState(ord('W')) & 0x8000:
-            player.dpos[0] = max(player.dpos[0] - 2 , -4)
+            player.dpos[0] = max(player.dpos[0] - 1.4 , -3.5)
         if GetAsyncKeyState(ord('S')) & 0x8000:
-            player.dpos[0] = min(player.dpos[0] + 2 , 4)
+            player.dpos[0] = min(player.dpos[0] + 1.4 , 3.5)
         if GetAsyncKeyState(ord('A')) & 0x8000:
-            player.dpos[1] = max(player.dpos[1] - 2 , -4)
+            player.dpos[1] = max(player.dpos[1] - 1.4 , -3.5)
         if GetAsyncKeyState(ord('D')) & 0x8000:
-            player.dpos[1] = min(player.dpos[1] + 2 , 4)
+            player.dpos[1] = min(player.dpos[1] + 1.4 , 3.5)
         if GetAsyncKeyState(ord('O')) & 0x8000:
             camera.start_zhen()
         if GetAsyncKeyState(ord('Q')) & 0x8000:
