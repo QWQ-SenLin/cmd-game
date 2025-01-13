@@ -1,21 +1,16 @@
 from os import system
 from threading import Thread
-import time , random
+import time
 from win32api import GetAsyncKeyState
 from ctypes import windll
 import perlin_noise
+from math import sin , cos , radians
 
 class Screen:
     def __init__(self) -> None:
         self.size = (200 , 400)
         print("正在生成地图")
         self.map = perlin_noise.get_map(self.size)
-        # exit(0)
-        # for i in range(self.size[0]):
-        #     self.map.append([])
-        #     for j in range(self.size[1]):
-        #         # self.map[i].append(Point((i , j) , (random.randint(0 , 255) , random.randint(0 , 255) , 0)))
-        #         self.map[i].append((0 , random.randint(150 , 235) , 0))
 
     def show(self):
         for i in range(camera.pos[0] , camera.pos[0] + camera.size[0]):
@@ -26,9 +21,13 @@ class Camera:
     def __init__(self) -> None:
         self.pos = [-1 , -1] #行 列
         self.size = [90 , 160] #行 列
-        self.zhening = False
+        self.zhening = -1
 
     def move(self , end):
+        if self.zhening >= 0:
+            self.pos[0] += cos(radians(36 * self.zhening))
+            self.pos[1] += sin(radians(36 * self.zhening))
+            self.zhening -= 1
         self.pos[0] += (end[0] - self.size[0] // 2 - self.pos[0]) / 5
         self.pos[0] = int(self.pos[0])
         self.pos[0] = max(0 , self.pos[0])
@@ -41,33 +40,21 @@ class Camera:
         screen.show()
 
     def start_zhen(self):
-        if not self.zhening:
-            self.zhening = True
-            Thread(target = self.zhen).start()
-
-    def zhen(self):
-        for i in range(2):
-            self.pos[0] += 1
-            time.sleep(2 / FPS)
-            self.pos[1] += 1
-            time.sleep(2 / FPS)
-            self.pos[0] -= 1
-            time.sleep(2 / FPS)
-            self.pos[1] -= 1
-            time.sleep(2 / FPS)
-        self.zhening = False
+        if self.zhening == -1:
+            self.zhening = 10
 
 class Player:
     def __init__(self) -> None:
         self.img = self.get_img()
         self.pos = [50 , 100]
         self.dpos = [0 , 0]
+        self.red_effect = [0 , False]
 
     def get_img(self) -> list:
         ret = []
         for i in range(5):
             for j in range(5):
-                ret.append([(0 , 0 , 255) , (i , j)]) #相对位置
+                ret.append([(0 , 50 , 255) , (i , j)]) #相对位置
         return ret
 
     def show(self):
@@ -78,9 +65,21 @@ class Player:
                 continue
             if not camera.pos[1] <= l < camera.pos[1] + camera.size[1]:
                 continue
-            out_map[framexor][h - camera.pos[0]][l - camera.pos[1]] = i[0]
+            out_map[framexor][h - camera.pos[0]][l - camera.pos[1]] = (
+                round(self.red_effect[0] * 245) , 
+                round((1 - self.red_effect[0]) * i[0][1]) , 
+                round((1 - self.red_effect[0]) * i[0][2])
+            )
 
     def update(self):
+        if self.red_effect[1]:
+            if 1 - self.red_effect[0] < 0.1:
+                self.red_effect[1] = False
+            else:
+                self.red_effect[0] += (1 - self.red_effect[0]) / 4
+        elif self.red_effect[0] >= 0.01:
+            self.red_effect[0] -= self.red_effect[0] / 8
+
         self.dpos[0] *= 0.85
         self.dpos[1] *= 0.85
         if abs(self.dpos[0]) <= 0.5: self.dpos[0] = 0
@@ -92,6 +91,10 @@ class Player:
         self.pos[1] = max(self.pos[1] , 0)
         self.pos[1] = min(self.pos[1] , screen.size[1] - 1)
         self.show()
+
+    def start_become_red(self):
+        if not self.red_effect[1]:
+            self.red_effect[1] = True
 
 class Bottom:
     def __init__(self):
@@ -159,8 +162,7 @@ class Main:
         out_points.sort()
         self.print_str(out_points)
 
-    def update(self):
-        # frame_out.clear()                                         
+    def update(self):                                        
         camera.move(player.pos)
         player.update()
         self.print_screen()                                     
@@ -177,6 +179,8 @@ class Main:
             player.dpos[1] = min(player.dpos[1] + 1.4 , 3.5)
         if GetAsyncKeyState(ord('O')) & 0x8000:
             camera.start_zhen()
+        if GetAsyncKeyState(ord('P')) & 0x8000:
+            player.start_become_red()
         if GetAsyncKeyState(ord('Q')) & 0x8000:
             print("\033[0m")
             system("cls")

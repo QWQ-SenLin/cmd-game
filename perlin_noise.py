@@ -59,10 +59,5 @@ def get_map(size):
         ret.append([])
         for j in range(size[1]):
             tmp = noise(i , j)
-            # if tmp <= 0:
-            #     print(i , j , tmp)
-            #     exit(0)
             ret[i].append((round(fade(tmp) * (190 - 0) + 0) , round(tmp * (255 - 120) + 120) , 0))
-            # print(round(noise(i , j)) , end = ",")
-        # print()
     return ret
