@@ -1,23 +1,41 @@
-import asyncio , time
+import asyncio , sys
 
-async def say_after(delay):
-    num = 0
-    for i in range(100000 * delay):
-        num += i
-        await asyncio.sleep(0)
-    print(num)
+async def async_print(str):
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, lambda: sys.stdout.write(str + '\n'))
 
+# 计算任务
+async def compute_task():
+    await async_print("开始计算任务...")
+    for i in range(4):
+        await async_print(f"计算进度: {i + 1}/4")
+    # await asyncio.sleep(2)  # 模拟耗时计算
+    await async_print("计算任务完成！")
+    return 42  # 返回计算结果
+
+# 显示任务
+async def display_task():
+    await async_print("开始显示任务...")
+    for i in range(10):
+        await async_print(f"显示进度: {i + 1}/10")
+        # await asyncio.sleep(0.5)  # 模拟显示任务的耗时
+    await async_print("显示任务完成！")
+
+# 主逻辑
 async def main():
-    task1 = asyncio.create_task(say_after(2))
-    task2 = asyncio.create_task(say_after(5))
+    # while True:  # 重复执行任务
+    
+    # 并发执行计算任务和显示任务
+    display_future = asyncio.create_task(display_task())
+    compute_future = asyncio.create_task(compute_task())
+    
+    # 等待两个任务完成
+    await asyncio.gather(compute_future, display_future)
+    
+    # 获取计算结果
+    result = compute_future.result()
+    await async_print(f"计算结果: {result}")
 
-    st = time.time()
-
-    # 等待协程完成
-    await task1
-    await task2
-
-    print(f"finished at {time.time() - st}")
-
-# Python 3.7+
-asyncio.run(main())
+# 运行主程序
+if __name__ == "__main__":
+    asyncio.run(main())

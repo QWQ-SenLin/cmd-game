@@ -1,10 +1,11 @@
 from os import system
-from threading import Thread
-import time
+# from threading import Thread
+import time , sys
 from win32api import GetAsyncKeyState
 from ctypes import windll
-import perlin_noise
 from math import sin , cos , radians
+import perlin_noise
+import config.config as const
 
 class Screen:
     def __init__(self) -> None:
@@ -98,8 +99,8 @@ class Player:
 
 class Bottom:
     def __init__(self):
-        print(f"\033[{camera.size[0] + 2};1H" , end = "")
-        print("\033[0mplayer_pos:(" , end = "")
+        # print(f"\033[{camera.size[0] + 2};1H\033[0mplayer_pos:(" , end = "")
+        print(f"\033[{camera.size[0] + 2};1H\033[0mplayer_pos:(")
         self.show_pos = [0 , 0]
 
     def update(self):
@@ -116,7 +117,9 @@ class Bottom:
         #     out_str.append(f"\033[{camera.size[0] + i + 2};{camera.size[1] * 2 - 60}H")
         #     for j in range(50):
         #         out_str.append("▀▄")
-        print("".join(out_str) , end = "" , flush = 1)
+
+        print("".join(out_str))
+        # print("".join(out_str) , end = "" , flush = 1)
 
 class Main:
     def __init__(self) -> None:
@@ -132,9 +135,14 @@ class Main:
             st = time.time()
             self.input()
             self.update()
-            # print("\033[1;1H\033[0m")
-            # print((time.time() - st) * 60)
-            # exit(0)
+            if const.OutWay == "c-exe":
+                system("cpp-print.exe")
+                sys.stdout.truncate(0)
+            else:
+                sys.stdout.flush()
+            print("\033[1;1H\033[0m")
+            print(str((time.time() - st) * 60))
+            exit(0)
             time.sleep(max(1 / 60 - (time.time() - st) , 0))
             framexor ^= 1
             if framexor: FPS = 1 / (time.time() - st)
@@ -151,7 +159,9 @@ class Main:
                 out_str.append(f"\033[38;2;{i[0][0]};{i[0][1]};{i[0][2]}m")
             last_color = i[0]
             out_str.append("██")
-        print("".join(out_str) , end = "\033[0m" , flush = 1)
+        out_str.append("\033[0m")
+        print("".join(out_str))
+        # print("".join(out_str) , end = "" , flush = 1)
 
     def print_screen(self):
         out_points = []
@@ -186,16 +196,25 @@ class Main:
             system("cls")
             exit(0)
 
-# if __name__ == "__main__":
-print("\033[0m")
-system("cls")
-framexor = False
-screen = Screen()
-camera = Camera()
-player = Player()
-bottom = Bottom() 
-FPS = 60
-out_map = [[[(0 , 0 , 0) for i in range(camera.size[1])] for j in range(camera.size[0])] for z in range(2)]
+def init():
+    global print , framexor , out_map , FPS , camera , screen , player , bottom
+    # system("cls")
+    print("\033[0m")   
+    const.loda_config()
+    screen = Screen()
+    camera = Camera()
+    player = Player()
+    framexor = False
+    if const.OutWay == "sys":
+        print = sys.stdout.write
+    if const.OutWay == "c-exe":
+        print = sys.stdout.write
+        sys.stdout = open(const.Path + '\\tmp\\out_file', "a+" , encoding = "gbk")
+    bottom = Bottom() 
+    out_map = [[[(0 , 0 , 0) for i in range(camera.size[1])] for j in range(camera.size[0])] for z in range(2)]
+    FPS = 60
+
+init()
 Main()
 
 #▀▄
